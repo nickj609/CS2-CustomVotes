@@ -8,6 +8,7 @@
       "Command": "cheats",
       "CommandAliases": [],
       "Description": "Vote to enable sv_cheats",
+      "Details": "Vote to enable sv_cheats",
       "TimeToVote": 30,
       "Options": {
         "Enable": {
@@ -26,11 +27,15 @@
       "DefaultOption": "Disable",
       "Style": "chat",
       "MinVotePercentage": -1,
+      "PanoramaDisplayToken": "#SFUI_vote_panorama_vote_default",
+      "PanoramaPassedToken": "#SFUI_vote_passed_panorama_vote",
+      "PanoramaPassedDetails": "Vote Passed!",
+      "UsePanoramaVote": false,
       "Permission": {
         "RequiresAll": false,
         "Permissions": []
       }
     }
   ],
-  "ConfigVersion": 2
+  "ConfigVersion": 5
 }

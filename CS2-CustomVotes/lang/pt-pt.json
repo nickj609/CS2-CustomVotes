@@ -5,5 +5,6 @@
   "vote.cooldown": "Por favor espere {DarkBlue}{0}{Default} segundos entre as votações!",
   "vote.already_voted": "Já votou!",
   "vote.finished_with": "Votar para {DarkBlue}{0}{Default} acaba em {DarkBlue}{1}{Default} ({2} votos).",
-  "vote.no_permission": "Não tem a permissão necessária para iniciar esta votação..."
+  "vote.no_permission": "Não tem a permissão necessária para iniciar esta votação...",
+  "vote.failed_participation": "Vote for {DarkBlue}{0}{Default} failed due to low participation ({1}/{2} votes, {3}% required)."
 }

@@ -1,6 +1,6 @@
 ![Copyright ev0lve Digital](https://img.shields.io/badge/Copyright-ev0lve%20Digital-blue) ![GitHub License](https://img.shields.io/github/license/imi-tat0r/CS2-CustomVotes) ![Issues](https://img.shields.io/github/issues/imi-tat0r/CS2-CustomVotes) ![Downloads](https://img.shields.io/github/downloads/imi-tat0r/CS2-CustomVotes/total) ![Stars](https://img.shields.io/github/stars/imi-tat0r/CS2-CustomVotes)
 
-# CS2 Custom Votes (1.1.3)
+# CS2 Custom Votes (1.1.4)
 ![image](https://du.hurenso.hn/r/X4jQaq.png) ![image](https://du.hurenso.hn/r/81Imq8.png)
 
 # About
@@ -13,6 +13,8 @@ Every vote options can trigger multiple commands at once allowing for a wide ran
 - Customizable duration for each vote
 - Cooldown between votes
 - Localized chat messages
+- Optional Panorama vote UI
+- MenuManagerAPI integration (auto-used when installed)
 - **CS2-CustomVotes.Shared API** for other plugins to register votes
 
 # Dependencies
@@ -59,53 +61,79 @@ Every vote options can trigger multiple commands at once allowing for a wide ran
          "DefaultOption": "Disable", // default option (must be a key from the "Options" object)
          "Style": "chat", // Menu style - "center" or "chat" (will be overridden by the global ForceStyle if not "none")
          "MinVotePercentage": -1, // minimum percentage of votes required to pass the vote (-1 behaves like 50%)
+         "MinParticipationPercentage": -1, // minimum percentage of eligible players that must vote (-1 disables the check)
+         "PanoramaDisplayToken": "#SFUI_vote_panorama_vote_default", // optional Panorama display token
+         "PanoramaPassedToken": "#SFUI_vote_passed_panorama_vote", // optional Panorama passed token
+         "PanoramaPassedDetails": "Vote Passed!", // optional Panorama passed details string
+         "UsePanoramaVote": false, // true = use Panorama vote UI instead of menu UI
          "Permission": {
             "RequiresAll": false, // if true, all permissions must be present to vote
             "Permissions": [] // list of permissions required to start this vote (empty list allows everyone to start the vote)
          }
       }
    ],
-   "ConfigVersion": 2
+   "ConfigVersion": 3
 }
 ```
+
 
 # API
 CS2-CustomVotes provides a shared API for other plugins to register custom votes.
 
-Add a reference to `CS2-CustomVotes.Shared` to your project in one of the following ways: 
+Add a reference to `CS2-CustomVotes.Shared` to your project in one of the following ways:
 1. Download the source code and build it yourself
 2. Download the latest release from the [releases page](https://github.com/imi-tat0r/CS2-CustomVotes/releases).
-3. Install the package using the .NET CLI, run: `dotnet add package CS2-CustomVotes.Shared`
+3. Install the package using the .NET CLI: `dotnet add package CS2-CustomVotes.Shared`
 
-After adding the reference to your project, you can create custom votes like this:
+
+## Example Usage
+
 ```csharp
-public interface ICustomVoteApi
-{
-    public void AddCustomVote(string name, string description, string defaultOption, float timeToVote, Dictionary<string, VoteOption> options, string style);
-    public void AddCustomVote(string name, List<string> aliases, string description, string defaultOption, float timeToVote, Dictionary<string, VoteOption> options, string style);
-    public void AddCustomVote(string name, string description, string defaultOption, float timeToVote, Dictionary<string, VoteOption> options, string style, int minVotePercentage);
-    public void AddCustomVote(string name, List<string> aliases, string description, string defaultOption, float timeToVote, Dictionary<string, VoteOption> options, string style, int minVotePercentage);
-    public void StartCustomVote(CCSPlayerController? player, string name);
-    public void EndCustomVote(string name);
-    public void RemoveCustomVote(string name);
-}
+using CS2_CustomVotes.Shared;
+using CS2_CustomVotes.Shared.Models;
+using CounterStrikeSharp.API.Core;
 
-customVotesApi.AddCustomVote(
-            "cheats", // command to trigger the vote
-            new List<string>(), // aliases for the command (optional)
-            "Vote to enable sv_cheats", // description of the vote, will be displayed in the vote menu
-            "Disable", // default option (must be a key from the "Options" object)
-            30, // time in seconds players have to vote
-            new Dictionary<string, VoteOption> // vote options
-            {
-                { "Enable", new VoteOption("{Green}Enable", new List<string> { "sv_cheats 1" })},
-                { "Disable", new VoteOption("{Red}Disable", new List<string> { "sv_cheats 0" })},
-            },
-            "chat", // Menu style - "center" or "chat"
-            -1); // minimum percentage of votes required to pass the vote (-1 behaves like 50%)
+// Acquire the API via capability lookup
+private ICustomVoteApi? _customVotesApi;
 
-customVotesApi.RemoveCustomVote("cheats");
+// Register a simple custom vote
+_customVotesApi?.AddCustomVote(
+   name: "cheats", // command to trigger the vote
+   aliases: new List<string> { "sv_cheats" }, // aliases for the command (optional)
+   description: "Vote to enable sv_cheats", // description of the vote, will be displayed in the vote menu and Panorama UI
+   defaultOption: "Disable", // default option (must be a key from the "Options" object)
+   timeToVote: 30, // time in seconds players have to vote
+   options: new Dictionary<string, VoteOption> // vote options
+   {
+      { "Enable", new VoteOption("{Green}Enable", new List<string> { "sv_cheats 1" }) },
+      { "Disable", new VoteOption("{Red}Disable", new List<string> { "sv_cheats 0" }) }
+   },
+   style: "chat", // Menu style - "center" or "chat"
+   minVotePercentage: -1, // minimum percentage of votes required to pass the vote (-1 behaves like 50%)
+   minParticipationPercentage: -1, // minimum percentage of eligible players that must vote (-1 disables the check)
+   usePanoramaVote: false, // true = use Panorama vote UI instead of menu UI
+   panoramaDisplayToken: "#SFUI_vote_panorama_vote_default", // optional Panorama display token
+   panoramaPassedToken: "#SFUI_vote_passed_panorama_vote", // optional Panorama passed token
+   panoramaPassedDetails: "Vote Passed!" // optional Panorama passed details string
+);
+
+// Start a vote for a player
+_customVotesApi?.StartCustomVote(player, "cheats");
+
+// Remove a vote
+_customVotesApi?.RemoveCustomVote("cheats");
 ```
+
+For advanced usage, you can use overloads with result callbacks, custom Panorama tokens, and handlers for Yes/No votes.
+
+
+# Vote UI selection
+- `UsePanoramaVote` uses Panorama UI (Yes/No only). Other option counts fall back to menus.
+- If MenuManagerAPI is installed, it is used automatically; otherwise chat/center menus are used.
+- Panorama UI strings can be customized per vote with `PanoramaDisplayToken`, `PanoramaPassedToken`, and `PanoramaPassedDetails`.
+
+# Troubleshooting
+- Panorama vote UI requires the vote text `platform_english.txt` file to exist in both the server install and the client install used to connect.
 
 # Credits
 - [Metamod:Source](https://www.sourcemm.net/)

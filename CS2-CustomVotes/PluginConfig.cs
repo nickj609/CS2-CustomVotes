@@ -35,6 +35,11 @@ public class CustomVotesConfig : BasePluginConfig
             DefaultOption = "Disable",
             Style = "center",
             MinVotePercentage = 50,
+            MinParticipationPercentage = -1,
+            UsePanoramaVote = false,
+            PanoramaDisplayToken = "#SFUI_vote_panorama_vote_default",
+            PanoramaPassedToken = "#SFUI_vote_passed_panorama_vote",
+            PanoramaPassedDetails = "Vote Passed!",
             Permission = new Permission
             {
                 RequiresAll = false,
@@ -44,5 +49,5 @@ public class CustomVotesConfig : BasePluginConfig
     ];
 
     [JsonPropertyName("ConfigVersion")] 
-    public override int Version { get; set; } = 2;
+    public override int Version { get; set; } = 3;
 }

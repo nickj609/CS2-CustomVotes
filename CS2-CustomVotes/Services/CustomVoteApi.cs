@@ -15,24 +15,83 @@ public class CustomVoteApi : ICustomVoteApi
     
     public void AddCustomVote(string name, string description, string defaultOption, float timeToVote, Dictionary<string, VoteOption> options, string style)
     {
-        _voteManager.AddVote(name, [], description, defaultOption, timeToVote, options, style, -1);
+        _voteManager.AddVote(name, [], description, defaultOption, timeToVote, options, style, -1, -1, false);
     }
 
     public void AddCustomVote(string name, List<string> aliases, string description, string defaultOption, float timeToVote,
         Dictionary<string, VoteOption> options, string style)
     {
-        _voteManager.AddVote(name, aliases, description, defaultOption, timeToVote, options, style, -1);
+        _voteManager.AddVote(name, aliases, description, defaultOption, timeToVote, options, style, -1, -1, false);
     }
     
     public void AddCustomVote(string name, string description, string defaultOption, float timeToVote, Dictionary<string, VoteOption> options, string style, int minVotePercentage)
     {
-        _voteManager.AddVote(name, [], description, defaultOption, timeToVote, options, style, minVotePercentage);
+        _voteManager.AddVote(name, [], description, defaultOption, timeToVote, options, style, minVotePercentage, -1, false);
     }
 
     public void AddCustomVote(string name, List<string> aliases, string description, string defaultOption, float timeToVote,
         Dictionary<string, VoteOption> options, string style, int minVotePercentage)
     {
-        _voteManager.AddVote(name, aliases, description, defaultOption, timeToVote, options, style, minVotePercentage);
+        _voteManager.AddVote(name, aliases, description, defaultOption, timeToVote, options, style, minVotePercentage, -1, false);
+    }
+
+    public void AddCustomVote(string name, string description, string defaultOption, float timeToVote, Dictionary<string, VoteOption> options, string style, int minVotePercentage, int minParticipationPercentage)
+    {
+        _voteManager.AddVote(name, [], description, defaultOption, timeToVote, options, style, minVotePercentage, minParticipationPercentage, false);
+    }
+
+    public void AddCustomVote(string name, List<string> aliases, string description, string defaultOption, float timeToVote,
+        Dictionary<string, VoteOption> options, string style, int minVotePercentage, int minParticipationPercentage)
+    {
+        _voteManager.AddVote(name, aliases, description, defaultOption, timeToVote, options, style, minVotePercentage, minParticipationPercentage, false);
+    }
+
+    public void AddCustomVote(string name, string description, string defaultOption, float timeToVote, Dictionary<string, VoteOption> options, string style, int minVotePercentage, bool usePanoramaVote)
+    {
+        _voteManager.AddVote(name, [], description, defaultOption, timeToVote, options, style, minVotePercentage, -1, usePanoramaVote);
+    }
+
+    public void AddCustomVote(string name, List<string> aliases, string description, string defaultOption, float timeToVote,
+        Dictionary<string, VoteOption> options, string style, int minVotePercentage, bool usePanoramaVote)
+    {
+        _voteManager.AddVote(name, aliases, description, defaultOption, timeToVote, options, style, minVotePercentage, -1, usePanoramaVote);
+    }
+
+    public void AddCustomVote(string name, string description, string defaultOption, float timeToVote, Dictionary<string, VoteOption> options, string style, int minVotePercentage, int minParticipationPercentage, bool usePanoramaVote)
+    {
+        _voteManager.AddVote(name, [], description, defaultOption, timeToVote, options, style, minVotePercentage, minParticipationPercentage, usePanoramaVote);
+    }
+
+    public void AddCustomVote(string name, List<string> aliases, string description, string defaultOption, float timeToVote,
+        Dictionary<string, VoteOption> options, string style, int minVotePercentage, int minParticipationPercentage, bool usePanoramaVote)
+    {
+        _voteManager.AddVote(name, aliases, description, defaultOption, timeToVote, options, style, minVotePercentage, minParticipationPercentage, usePanoramaVote);
+    }
+
+    public void AddCustomVote(string name, string description, string defaultOption, float timeToVote, Dictionary<string, VoteOption> options, string style, int minVotePercentage, int minParticipationPercentage, bool usePanoramaVote, Func<YesNoVoteInfo, bool>? resultCallback, Action<YesNoVoteAction, int, int, VoteEndReason>? handler)
+    {
+        _voteManager.AddVote(name, [], description, defaultOption, timeToVote, options, style, minVotePercentage, minParticipationPercentage, usePanoramaVote, resultCallback, handler);
+    }
+
+    public void AddCustomVote(string name, List<string> aliases, string description, string defaultOption, float timeToVote,
+        Dictionary<string, VoteOption> options, string style, int minVotePercentage, int minParticipationPercentage, bool usePanoramaVote, Func<YesNoVoteInfo, bool>? resultCallback, Action<YesNoVoteAction, int, int, VoteEndReason>? handler)
+    {
+        _voteManager.AddVote(name, aliases, description, defaultOption, timeToVote, options, style, minVotePercentage, minParticipationPercentage, usePanoramaVote, resultCallback, handler);
+    }
+
+    public void AddCustomVote(string name, string description, string defaultOption, float timeToVote, Dictionary<string, VoteOption> options, string style, int minVotePercentage, int minParticipationPercentage, bool usePanoramaVote, string? panoramaDisplayToken, string? panoramaPassedToken, string? panoramaPassedDetails, Func<YesNoVoteInfo, bool>? resultCallback, Action<YesNoVoteAction, int, int, VoteEndReason>? handler)
+    {
+        _voteManager.AddVote(name, [], description, defaultOption, timeToVote, options, style, minVotePercentage, minParticipationPercentage, usePanoramaVote, panoramaDisplayToken, panoramaPassedToken, panoramaPassedDetails, resultCallback, handler);
+    }
+
+    public void AddCustomVote(string name, List<string> aliases, string description, string details, string defaultOption, float timeToVote,
+        Dictionary<string, VoteOption> options, string style, int minVotePercentage, int minParticipationPercentage, bool usePanoramaVote, string? panoramaDisplayToken, string? panoramaPassedToken, string? panoramaPassedDetails, Func<YesNoVoteInfo, bool>? resultCallback, Action<YesNoVoteAction, int, int, VoteEndReason>? handler)
+    {
+        _voteManager.AddVote(name, aliases, description, defaultOption, timeToVote, options, style, minVotePercentage, minParticipationPercentage, usePanoramaVote, panoramaDisplayToken, panoramaPassedToken, panoramaPassedDetails, resultCallback, handler);
+    }
+    public void AddCustomVote(string name, List<string> aliases, string description, string defaultOption, float timeToVote, Dictionary<string, VoteOption> options, string style, int minVotePercentage, int minParticipationPercentage, bool usePanoramaVote, string? panoramaDisplayToken, string? panoramaPassedToken, string? panoramaPassedDetails, Func<YesNoVoteInfo, bool>? resultCallback, Action<YesNoVoteAction, int, int, VoteEndReason>? handler)
+    {
+        _voteManager.AddVote(name, aliases, description, defaultOption, timeToVote, options, style, minVotePercentage, minParticipationPercentage, usePanoramaVote, panoramaDisplayToken, panoramaPassedToken, panoramaPassedDetails, resultCallback, handler);
     }
 
     public void StartCustomVote(CCSPlayerController? player, string name)
@@ -42,7 +101,7 @@ public class CustomVoteApi : ICustomVoteApi
 
     public void EndCustomVote(string name)
     {
-        _voteManager.EndVote(name);
+        _voteManager.EndVote(name, VoteEndReason.VoteEnd_Cancelled);
     }
 
     public void RemoveCustomVote(string name)

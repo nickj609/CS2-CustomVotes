@@ -8,6 +8,7 @@ using CS2_CustomVotes.Factories;
 using CS2_CustomVotes.Services;
 using CS2_CustomVotes.Shared;
 using CSSharpUtils.Extensions;
+using MenuManagerAPI.Shared;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -18,7 +19,7 @@ public class CustomVotes : BasePlugin, IPluginConfig<CustomVotesConfig>
 {
     public override string ModuleName => "Custom Votes";
     public override string ModuleDescription => "Allows you to create custom votes for your server.";
-    public override string ModuleVersion => "1.1.3";
+    public override string ModuleVersion => "1.1.4";
     public override string ModuleAuthor => "imi-tat0r";
     
     public CustomVotesConfig Config { get; set; } = null!;
@@ -27,6 +28,9 @@ public class CustomVotes : BasePlugin, IPluginConfig<CustomVotesConfig>
     private readonly IServiceProvider _serviceProvider;
 
     private static PluginCapability<ICustomVoteApi> CustomVoteCapability { get; } = new("custom_votes:api");
+    private static PluginCapability<IMenuAPI?> MenuManagerCapability { get; } = new("menu:api");
+
+    public IMenuAPI? MenuManagerApi { get; set; }
 
     public CustomVotes(ILogger<CustomVotes> logger, IServiceProvider serviceProvider)
     {
@@ -48,6 +52,20 @@ public class CustomVotes : BasePlugin, IPluginConfig<CustomVotesConfig>
         RegisterEventHandler<EventPlayerDisconnect>(voteManager.OnPlayerDisconnect);
     }
 
+    public override void OnAllPluginsLoaded(bool hotReload)
+    {
+        MenuManagerApi = MenuManagerCapability.Get();
+        if (MenuManagerApi == null)
+        {
+            _logger.LogWarning("[CustomVotes] MenuManagerAPI not found - votes will use chat/center menus only");
+        }
+        else
+        {
+            _logger.LogDebug("[CustomVotes] MenuManagerAPI found");
+        }
+
+    }
+
     public void OnConfigParsed(CustomVotesConfig config)
     {
         Config = config;
@@ -57,7 +75,6 @@ public class CustomVotes : BasePlugin, IPluginConfig<CustomVotesConfig>
         foreach (var customVote in Config.CustomVotes)
             voteManager.AddVote(customVote);
         
-        config.Update();
     }
     
     [ConsoleCommand("css_reload_cfg", "Reload the config in the current session without restarting the server")]
@@ -71,7 +88,7 @@ public class CustomVotes : BasePlugin, IPluginConfig<CustomVotesConfig>
         }
         catch (Exception e)
         {
-            info.ReplyToCommand($"[DiscordChatSync] Failed to reload config: {e.Message}");
+            info.ReplyToCommand($"[CustomVotes] Failed to reload config: {e.Message}");
         }
     }
 }

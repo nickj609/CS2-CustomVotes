@@ -24,6 +24,8 @@ public class CustomVote
     
     [JsonPropertyName("Description")]
     public string Description { get; init; } = null!;
+
+    // ...existing code...
     
     [JsonPropertyName("TimeToVote")]
     public float TimeToVote { get; init; }
@@ -40,8 +42,29 @@ public class CustomVote
     [JsonPropertyName("MinVotePercentage")]
     public int MinVotePercentage { get; init; } = -1;
 
+    [JsonPropertyName("MinParticipationPercentage")]
+    public int MinParticipationPercentage { get; init; } = -1;
+
     [JsonPropertyName("Permission")]
     public Permission Permission { get; init; } = new();
+
+    [JsonPropertyName("UsePanoramaVote")]
+    public bool UsePanoramaVote { get; init; } = false;
+
+    [JsonPropertyName("PanoramaDisplayToken")]
+    public string? PanoramaDisplayToken { get; init; }
+
+    [JsonPropertyName("PanoramaPassedToken")]
+    public string? PanoramaPassedToken { get; init; }
+
+    [JsonPropertyName("PanoramaPassedDetails")]
+    public string? PanoramaPassedDetails { get; init; }
+
+    [JsonIgnore]
+    public Func<YesNoVoteInfo, bool>? PanoramaResult { get; init; }
+
+    [JsonIgnore]
+    public Action<YesNoVoteAction, int, int, VoteEndReason>? PanoramaHandler { get; init; }
 
     [JsonIgnore] 
     public float LastVoteTime { get; set; } = 0;

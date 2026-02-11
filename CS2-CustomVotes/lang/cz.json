@@ -5,5 +5,6 @@
   "vote.cooldown": "Prosím, počkejte {DarkBlue}{0}{Default} sekund mezi hlasováním.",
   "vote.already_voted": "Již jste hlasovali.",
   "vote.finished_with": "Hlasování pro {DarkBlue}{0}{Default} skončilo s výsledkem {DarkBlue}{1}{Default} ({2} hlasy).",
-  "vote.no_permission": "Nemáte potřebné oprávnění k zahájení tohoto hlasování."
+  "vote.no_permission": "Nemáte potřebné oprávnění k zahájení tohoto hlasování.",
+  "vote.failed_participation": "Vote for {DarkBlue}{0}{Default} failed due to low participation ({1}/{2} votes, {3}% required)."
 }
