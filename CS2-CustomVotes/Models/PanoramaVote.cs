@@ -28,16 +28,9 @@ public class PanoramaVoteInstance
     private RecipientFilter? _currentVoteFilter;
     private Timer? _voteTimer;
     private bool _voteEnded;
-    private bool _commandsRegistered;
-
     public bool IsEnded => _voteEnded;
 
-    public PanoramaVoteInstance(
-        CustomVotes plugin,
-        CustomVote vote,
-        Action<string, VoteEndReason> onEndVote,
-        Action<CCSPlayerController?, string> onPlayerVoted,
-        CCSPlayerController? voteCaller)
+    public PanoramaVoteInstance(CustomVotes plugin, CustomVote vote, Action<string, VoteEndReason> onEndVote, Action<CCSPlayerController?, string> onPlayerVoted, CCSPlayerController? voteCaller)
     {
         _plugin = plugin;
         _vote = vote;
@@ -58,43 +51,24 @@ public class PanoramaVoteInstance
             _plugin.Logger.LogError("[CustomVotes] Panorama vote controller entity not found.");
             throw new InvalidOperationException("Could not find vote controller entity");
         }
-
-        if (controllers.Count > 1)
-            _plugin.Logger.LogDebug("[CustomVotes] Multiple vote_controller entities found ({Count}); selecting the last controller.", controllers.Count);
-
         _voteController = controllers.Last();
     }
 
     public void Display()
     {
-        if (_voteController == null)
-        {
-            _plugin.Logger.LogWarning("[CustomVotes] Panorama vote skipped because vote controller is null.");
+        InitializeVoters();
+            
+        if (_voterCount == 0)
             return;
-        }
+        if (_voteController == null)
+            return;
 
         _currentVoteFilter = new RecipientFilter(_voters.ToArray());
-        InitializeVoters();
-        if (_voterCount == 0)
-        {
-            _plugin.Logger.LogWarning("[CustomVotes] Panorama vote skipped because there are no eligible voters.");
-            return;
-        }
-
-        if (_vote.Options.Count != 2)
-        {
-            _plugin.Logger.LogWarning("[CustomVotes] Panorama votes are yes/no only; options count={Count}.", _vote.Options.Count);
-        }
-
-        if (!_vote.Options.Keys.Any(k => string.Equals(k, "Yes", StringComparison.OrdinalIgnoreCase)) ||
-            !_vote.Options.Keys.Any(k => string.Equals(k, "No", StringComparison.OrdinalIgnoreCase)))
-        {
-            _plugin.Logger.LogWarning("[CustomVotes] Panorama vote options should include 'Yes' and 'No' keys for correct result mapping.");
-        }
-
-        ResolveYesNoKeys();
+        _yesOptionKey = _vote.Options.Keys.FirstOrDefault(k => string.Equals(k, "Yes", StringComparison.OrdinalIgnoreCase));
+        _noOptionKey = _vote.Options.Keys.FirstOrDefault(k => string.Equals(k, "No", StringComparison.OrdinalIgnoreCase));
 
         ResetVoteController();
+
         _voteController.PotentialVotes = _voterCount;
         _voteController.ActiveIssueIndex = 2;
 
@@ -114,12 +88,6 @@ public class PanoramaVoteInstance
             return HookResult.Continue;
 
         var voteOption = @event.VoteOption;
-        if (voteOption < 0 || voteOption >= _vote.Options.Count)
-        {
-            _plugin.Logger.LogWarning("[CustomVotes] Panorama vote cast with invalid option index {Index}.", voteOption);
-            return HookResult.Continue;
-        }
-
         var optionKey = voteOption switch
         {
             0 => _yesOptionKey,
@@ -128,17 +96,12 @@ public class PanoramaVoteInstance
         };
 
         if (optionKey == null)
-        {
-            _plugin.Logger.LogWarning("[CustomVotes] Panorama vote cast with unmapped option index {Index}.", voteOption);
             return HookResult.Continue;
-        }
-        if (optionKey != null)
-        {
-            _onPlayerVoted(player, optionKey);
-            _vote.PanoramaHandler?.Invoke(YesNoVoteAction.VoteAction_Vote, player.Slot, voteOption, VoteEndReason.VoteEnd_TimeUp);
-            UpdateVoteCounts();
-            CheckForEarlyVoteClose();
-        }
+
+        _onPlayerVoted(player, optionKey);
+        _vote.PanoramaHandler?.Invoke(YesNoVoteAction.VoteAction_Vote, player.Slot, voteOption, VoteEndReason.VoteEnd_TimeUp);
+        UpdateVoteCounts();
+        CheckForEarlyVoteClose();
 
         return HookResult.Continue;
     }
@@ -149,10 +112,11 @@ public class PanoramaVoteInstance
             return;
 
         for (int i = 0; i < _voteController.VotesCast.Length; i++)
+        {
             _voteController.VotesCast[i] = VoteUncastValue;
-
-        for (int i = 0; i < _voteController.VoteOptionCount.Length; i++)
-            _voteController.VoteOptionCount[i] = 0;
+            if (i < _voteController.VoteOptionCount.Length)
+                _voteController.VoteOptionCount[i] = 0;
+        }
     }
 
     private void InitializeVoters()
@@ -164,12 +128,6 @@ public class PanoramaVoteInstance
                 _voterSlots.Add(player.Slot);
         }
         _voterCount = _voterSlots.Count;
-    }
-
-    private void ResolveYesNoKeys()
-    {
-        _yesOptionKey = _vote.Options.Keys.FirstOrDefault(k => string.Equals(k, "Yes", StringComparison.OrdinalIgnoreCase));
-        _noOptionKey = _vote.Options.Keys.FirstOrDefault(k => string.Equals(k, "No", StringComparison.OrdinalIgnoreCase));
     }
 
     private void UpdateVoteCounts()
@@ -190,17 +148,14 @@ public class PanoramaVoteInstance
 
     private void SendVoteStartMessage(RecipientFilter recipientFilter)
     {
-        var details = _vote.Description;
-        var display = string.IsNullOrWhiteSpace(_vote.PanoramaDisplayToken)
-            ? "#SFUI_vote_panorama_vote_default"
-            : _vote.PanoramaDisplayToken;
-
         UserMessage um = UserMessage.FromId(346);
         um.SetInt("team", -1);
         um.SetInt("player_slot", _voteCallerSlot ?? 99);
         um.SetInt("vote_type", -1);
-        um.SetString("disp_str", display);
-        um.SetString("details_str", details);
+        um.SetString("disp_str", string.IsNullOrWhiteSpace(_vote.PanoramaDisplayToken)
+            ? "#SFUI_vote_panorama_vote_default"
+            : _vote.PanoramaDisplayToken);
+        um.SetString("details_str", _vote.Description);
         um.SetBool("is_yes_no_vote", true);
         um.Send(recipientFilter);
     }
@@ -217,9 +172,10 @@ public class PanoramaVoteInstance
 
     public void OnPlayerDisconnected(CCSPlayerController player)
     {
-        if (_voteController == null || player.Slot < 0)
+        if (_voteController == null)
             return;
-
+        if (player.Slot < 0)
+            return;
         if (!_voterSlots.Remove(player.Slot))
             return;
 
@@ -277,22 +233,14 @@ public class PanoramaVoteInstance
 
     private void RegisterCommands()
     {
-        if (_commandsRegistered)
-            return;
-
         _plugin.AddCommand("css_cancelvote", "Cancels the active vote.", CommandCancelVote);
         _plugin.AddCommand("css_revote", "Allows you to revote.", CommandRevote);
-        _commandsRegistered = true;
     }
 
     private void DeregisterCommands()
     {
-        if (!_commandsRegistered)
-            return;
-
         _plugin.RemoveCommand("css_cancelvote", CommandCancelVote);
         _plugin.RemoveCommand("css_revote", CommandRevote);
-        _commandsRegistered = false;
     }
 
     [RequiresPermissions("@css/root")]
@@ -308,9 +256,11 @@ public class PanoramaVoteInstance
 
     private void Revote(CCSPlayerController? player)
     {
-        if (player == null || _currentVoteFilter == null || _voteController == null)
-            return;
 
+        if (_voteController == null)
+            return;
+        if (player == null || _currentVoteFilter == null)
+            return;
         if (!_currentVoteFilter.Contains(player))
             return;
 
@@ -329,12 +279,9 @@ public class PanoramaVoteInstance
     {
         if (_vote.PanoramaResult != null)
             return _vote.PanoramaResult(voteInfo);
-
         if (voteInfo.TotalVotes == 0)
             return false;
-
-        if (_vote.MinVotePercentage >= 0 &&
-            voteInfo.YesVotes < voteInfo.TotalVotes * _vote.MinVotePercentage / 100.0)
+        if (_vote.MinVotePercentage >= 0 && voteInfo.YesVotes < voteInfo.TotalVotes * _vote.MinVotePercentage / 100.0)
             return false;
 
         return voteInfo.YesVotes > voteInfo.NoVotes;
@@ -385,19 +332,16 @@ public class PanoramaVoteInstance
     {
         if (_currentVoteFilter == null)
             return;
-
-        var details = string.IsNullOrWhiteSpace(_vote.PanoramaPassedDetails)
-            ? _vote.Description
-            : _vote.PanoramaPassedDetails;
-        var display = string.IsNullOrWhiteSpace(_vote.PanoramaPassedToken)
-            ? "#SFUI_vote_passed_panorama_vote"
-            : _vote.PanoramaPassedToken;
-
+            
         UserMessage um = UserMessage.FromId(347);
         um.SetInt("team", -1);
         um.SetInt("vote_type", 2);
-        um.SetString("disp_str", display);
-        um.SetString("details_str", details);
+        um.SetString("disp_str", string.IsNullOrWhiteSpace(_vote.PanoramaPassedToken)
+            ? "#SFUI_vote_passed_panorama_vote"
+            : _vote.PanoramaPassedToken);
+        um.SetString("details_str", string.IsNullOrWhiteSpace(_vote.PanoramaPassedDetails)
+            ? _vote.Description
+            : _vote.PanoramaPassedDetails);
         um.Send(_currentVoteFilter);
     }
 }

@@ -15,13 +15,11 @@ namespace CS2_CustomVotes.Services;
 public interface IVoteManager
 {
     public void AddVote(CustomVote vote);
-    public void AddVote(string name, List<string> aliases, string description, string defaultOption, float timeToVote, Dictionary<string, VoteOption> options, string style = "center", int minVotePercentage = 50, int minParticipationPercentage = -1, bool usePanoramaVote = false);
-    public void AddVote(string name, List<string> aliases, string description, string defaultOption, float timeToVote, Dictionary<string, VoteOption> options, string style, int minVotePercentage, int minParticipationPercentage, bool usePanoramaVote, Func<YesNoVoteInfo, bool>? resultCallback, Action<YesNoVoteAction, int, int, VoteEndReason>? handler);
-    public void AddVote(string name, List<string> aliases, string description, string defaultOption, float timeToVote, Dictionary<string, VoteOption> options, string style, int minVotePercentage, int minParticipationPercentage, bool usePanoramaVote, string? panoramaDisplayToken, string? panoramaPassedToken, string? panoramaPassedDetails, Func<YesNoVoteInfo, bool>? resultCallback, Action<YesNoVoteAction, int, int, VoteEndReason>? handler);
+    public void AddVote(string name, List<string> aliases, string description, string defaultOption, float timeToVote, Dictionary<string, VoteOption> options, string style = "center", int minVotePercentage = 50, int minParticipationPercentage = -1, bool usePanoramaVote = false, string? panoramaDisplayToken = null, string? panoramaPassedToken = null, string? panoramaPassedDetails = null, Func<YesNoVoteInfo, bool>? resultCallback = null, Action<YesNoVoteAction, int, int, VoteEndReason>? handler = null);
     public void RemoveVote(string name);
-    
+
     public bool StartVote(CCSPlayerController? player, string name, out string baseName);
-    public void EndVote(string name, VoteEndReason reason);
+    public void EndVote(string name, VoteEndReason reason = VoteEndReason.VoteEnd_TimeUp);
     
     public void OnPlayerVoted(CCSPlayerController? player, string option);
     public HookResult OnPlayerConnectFull(EventPlayerConnectFull @event, GameEventInfo _);
@@ -43,7 +41,6 @@ public class VoteManager : IVoteManager
         _activeVoteFactory = activeVoteFactory;
     }
     private Dictionary<string, CustomVote> Votes { get; set; } = new();
-    private Dictionary<string, string> VoteAliases { get; } = new(StringComparer.OrdinalIgnoreCase);
     private ActiveVote? ActiveVote { get; set; }
     private float _nextVoteTime;
     private bool _isEndingVote;
@@ -68,21 +65,6 @@ public class VoteManager : IVoteManager
             return;
         }
 
-        foreach (var alias in vote.CommandAliases)
-        {
-            if (VoteAliases.ContainsKey(alias))
-            {
-                _logger.LogWarning("[CustomVotes] Alias {Alias} already exists for vote {Name}", alias, VoteAliases[alias]);
-                continue;
-            }
-            VoteAliases[alias] = vote.Command;
-        }
-
-        if (vote.UsePanoramaVote && vote.Options.Count != 2)
-        {
-            _logger.LogWarning("[CustomVotes] Panorama votes only support 2 options. Vote {Name} has {Count} - it will fall back to menu UI.", vote.Command, vote.Options.Count);
-        }
-
         _logger.LogDebug("[CustomVotes] Vote {Name} added", vote.Command);
         
         _plugin.AddCommand(vote.Command, vote.Description, HandleVoteStartRequest);
@@ -91,45 +73,7 @@ public class VoteManager : IVoteManager
         
         vote.ExecuteCommand();
     }
-    public void AddVote(string name, List<string> aliases, string description, string defaultOption, float timeToVote, Dictionary<string, VoteOption> options, string style = "center", int minVotePercentage = 50, int minParticipationPercentage = -1, bool usePanoramaVote = false)
-    {
-        var customVote = new CustomVote
-        {
-            Command = name,
-            CommandAliases = aliases,
-            Description = description,
-            DefaultOption = defaultOption,
-            TimeToVote = timeToVote,
-            Options = options,
-            Style = style,
-            MinVotePercentage = minVotePercentage,
-            MinParticipationPercentage = minParticipationPercentage,
-            UsePanoramaVote = usePanoramaVote,
-        };
-        AddVote(customVote);
-    }
-
-    public void AddVote(string name, List<string> aliases, string description, string defaultOption, float timeToVote, Dictionary<string, VoteOption> options, string style, int minVotePercentage, int minParticipationPercentage, bool usePanoramaVote, Func<YesNoVoteInfo, bool>? resultCallback, Action<YesNoVoteAction, int, int, VoteEndReason>? handler)
-    {
-        var customVote = new CustomVote
-        {
-            Command = name,
-            CommandAliases = aliases,
-            Description = description,
-            DefaultOption = defaultOption,
-            TimeToVote = timeToVote,
-            Options = options,
-            Style = style,
-            MinVotePercentage = minVotePercentage,
-            MinParticipationPercentage = minParticipationPercentage,
-            UsePanoramaVote = usePanoramaVote,
-            PanoramaResult = resultCallback,
-            PanoramaHandler = handler
-        };
-        AddVote(customVote);
-    }
-
-    public void AddVote(string name, List<string> aliases, string description, string defaultOption, float timeToVote, Dictionary<string, VoteOption> options, string style, int minVotePercentage, int minParticipationPercentage, bool usePanoramaVote, string? panoramaDisplayToken, string? panoramaPassedToken, string? panoramaPassedDetails, Func<YesNoVoteInfo, bool>? resultCallback, Action<YesNoVoteAction, int, int, VoteEndReason>? handler)
+    public void AddVote(string name, List<string> aliases, string description, string defaultOption, float timeToVote, Dictionary<string, VoteOption> options, string style = "center", int minVotePercentage = 50, int minParticipationPercentage = -1, bool usePanoramaVote = false, string? panoramaDisplayToken = null, string? panoramaPassedToken = null, string? panoramaPassedDetails = null, Func<YesNoVoteInfo, bool>? resultCallback = null, Action<YesNoVoteAction, int, int, VoteEndReason>? handler = null)
     {
         var customVote = new CustomVote
         {
@@ -154,17 +98,11 @@ public class VoteManager : IVoteManager
     public void RemoveVote(string name)
     {
         if (!Votes.ContainsKey(name))
-        {
             _logger.LogWarning("[CustomVotes] Vote {Name} does not exist", name);
-            return;
-        }
         
         _plugin.RemoveCommand(name, HandleVoteStartRequest);
         foreach (var alias in Votes[name].CommandAliases)
-        {
             _plugin.RemoveCommand(alias, HandleVoteStartRequest);
-            VoteAliases.Remove(alias);
-        }
         
         if (!Votes.Remove(name))
             _logger.LogWarning("[CustomVotes] Could not remove {Name}", name);
@@ -174,13 +112,10 @@ public class VoteManager : IVoteManager
     
     public bool StartVote(CCSPlayerController? player, string name, out string baseName)
     {
-        // check if vote exists
+        /// check if vote exists
         if (!Votes.TryGetValue(name, out var vote))
-        {
             // might be an alias
-            if (VoteAliases.TryGetValue(name, out var aliasName))
-                Votes.TryGetValue(aliasName, out vote);
-        }
+            vote ??= Votes.FirstOrDefault(v => v.Value.CommandAliases.Contains(name)).Value;
         
         // set base name for logging and chat message
         baseName = vote?.Command ?? string.Empty;
@@ -203,11 +138,13 @@ public class VoteManager : IVoteManager
             return false;
         }
 
+        // print vote started message before opening menu
+        Server.PrintToChatAll($"{ChatUtils.FormatMessage(_plugin.Config.ChatPrefix)} {ChatUtils.FormatMessage(_localizer["vote.started", player!.PlayerName, vote.Command])}");
+
         // create new active vote
         ActiveVote = _activeVoteFactory.Create(vote, EndVote, OnPlayerVoted, player);
         ActiveVote.OpenMenuForAll();
-        
-        _logger.LogDebug("[CustomVotes] Vote {Name} started", name);
+
         return true;
     }
     public void EndVote(string name, VoteEndReason reason)
@@ -234,22 +171,21 @@ public class VoteManager : IVoteManager
         _isEndingVote = true;
         try
         {
-        
-        if (reason != VoteEndReason.VoteEnd_Cancelled)
-            ProcessVoteResults();
-        else
-            _logger.LogDebug("[CustomVotes] Vote {Name} cancelled", name);
-        
-        // kill vote timeout timer and reset active vote
-        if (!(ActiveVote.UsePanorama && ActiveVote.PanoramaVote?.IsEnded == true))
-            ActiveVote.CloseMenuForAll();
-        ActiveVote.VoteTimeout?.Kill();
-        ActiveVote = null;
-        
-        // set next vote time to prevent spam
-        _nextVoteTime = Server.CurrentTime + _plugin.Config.VoteCooldown;
-        
-        _logger.LogDebug("[CustomVotes] Vote {Name} ended ({Reason})", name, reason);
+            if (reason != VoteEndReason.VoteEnd_Cancelled)
+                ProcessVoteResults();
+            else
+                _logger.LogDebug("[CustomVotes] Vote {Name} cancelled", name);
+            
+            // kill vote timeout timer and reset active vote
+            if (!(ActiveVote.UsePanorama && ActiveVote.PanoramaVote?.IsEnded == true))
+                ActiveVote.CloseMenuForAll();
+            ActiveVote.VoteTimeout?.Kill();
+            ActiveVote = null;
+            
+            // set next vote time to prevent spam
+            _nextVoteTime = Server.CurrentTime + _plugin.Config.VoteCooldown;
+            
+            _logger.LogDebug("[CustomVotes] Vote {Name} ended ({Reason})", name, reason);
         }
         finally
         {
@@ -309,16 +245,13 @@ public class VoteManager : IVoteManager
         if (ActiveVote == null)
             return HookResult.Continue;
 
-        if (!ActiveVote.UsePanorama)
+        if (ActiveVote.UsePanorama)
+            return HookResult.Continue;
+
+        if (ActiveVote.VoteMenu != null)
+        {
             ActiveVote.EligibleVoters.Add(player!.Pawn.Index);
 
-        // open vote menu for player
-        if (ActiveVote.UsePanorama)
-        {
-            // Player will automatically be included when Panorama vote displays to all
-        }
-        else if (ActiveVote.VoteMenu != null)
-        {
             if (_plugin.MenuManagerApi != null)
             {
                 _plugin.MenuManagerApi.OpenMenu(ActiveVote.VoteMenu, player!);
@@ -332,7 +265,6 @@ public class VoteManager : IVoteManager
                 MenuManager.OpenChatMenu(player!, (ActiveVote.VoteMenu! as ChatMenu)!);
             }
         }
-        
         return HookResult.Continue;
     }
     public HookResult OnPlayerDisconnect(EventPlayerDisconnect @event, GameEventInfo _)
@@ -399,7 +331,7 @@ public class VoteManager : IVoteManager
             _logger.LogWarning("[CustomVotes] Custom votes are disabled");
             return;
         }
-        
+
         if (!player.IsPlayer())
         {
             _logger.LogDebug("[CustomVotes] Voter is not a valid player");
@@ -412,7 +344,7 @@ public class VoteManager : IVoteManager
             return;
         }
         
-        if (StartVote(player, info.GetArg(0), out var baseName))
-            Server.PrintToChatAll($"{ChatUtils.FormatMessage(_plugin.Config.ChatPrefix)} {ChatUtils.FormatMessage(_localizer["vote.started", player!.PlayerName, baseName])}");
+        if(StartVote(player, info.GetArg(0), out var baseName))
+            _logger.LogDebug("[CustomVotes] Vote {Name} started", baseName);
     }
 }

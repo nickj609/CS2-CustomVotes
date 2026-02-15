@@ -8,15 +8,12 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="CounterStrikeSharp.API" Version="1.0.346" />
-      <PackageReference Include="CSSharpUtils" Version="1.0.9" />
+      <PackageReference Include="CounterStrikeSharp.API" Version="1.0.362" />
+      <PackageReference Include="MenuManagerAPI.Shared" Version="1.0.3" />
+      <PackageReference Include="CSSharpUtils" Version="1.0.10" />
     </ItemGroup>
 
     <ItemGroup>
       <ProjectReference Include="..\CS2-CustomVotes.Shared\CS2-CustomVotes.Shared.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <ProjectReference Include="..\..\MenuManagerAPI\MenuManagerAPI.Shared\MenuManagerAPI.Shared.csproj" Private="false" />
     </ItemGroup>
 </Project>

@@ -19,7 +19,7 @@ public class CustomVotes : BasePlugin, IPluginConfig<CustomVotesConfig>
 {
     public override string ModuleName => "Custom Votes";
     public override string ModuleDescription => "Allows you to create custom votes for your server.";
-    public override string ModuleVersion => "1.1.4";
+    public override string ModuleVersion => "1.2.0";
     public override string ModuleAuthor => "imi-tat0r";
     
     public CustomVotesConfig Config { get; set; } = null!;
@@ -63,7 +63,6 @@ public class CustomVotes : BasePlugin, IPluginConfig<CustomVotesConfig>
         {
             _logger.LogDebug("[CustomVotes] MenuManagerAPI found");
         }
-
     }
 
     public void OnConfigParsed(CustomVotesConfig config)
@@ -74,7 +73,8 @@ public class CustomVotes : BasePlugin, IPluginConfig<CustomVotesConfig>
 
         foreach (var customVote in Config.CustomVotes)
             voteManager.AddVote(customVote);
-        
+            
+        config.Update();
     }
     
     [ConsoleCommand("css_reload_cfg", "Reload the config in the current session without restarting the server")]
