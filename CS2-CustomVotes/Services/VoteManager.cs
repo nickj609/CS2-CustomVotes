@@ -98,8 +98,12 @@ public class VoteManager : IVoteManager
     public void RemoveVote(string name)
     {
         if (!Votes.ContainsKey(name))
-            _logger.LogWarning("[CustomVotes] Vote {Name} does not exist", name);
-        
+        {
+            _logger.LogWarning("[CustomVotes] Remove Vote {Name} does not exist", name);
+            return;
+        }
+
+
         _plugin.RemoveCommand(name, HandleVoteStartRequest);
         foreach (var alias in Votes[name].CommandAliases)
             _plugin.RemoveCommand(alias, HandleVoteStartRequest);
